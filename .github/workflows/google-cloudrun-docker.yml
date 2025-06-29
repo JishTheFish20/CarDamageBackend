@@ -14,34 +14,22 @@ jobs:
       id-token: 'write'
 
     steps:
-      # Checkout your code
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
-      # Authenticate to Google Cloud with your service account JSON key
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      # Log in to Artifact Registry Docker repository
-      - name: 'Docker Auth'
-        uses: 'docker/login-action@v3'
-        with:
-          username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.access_token }}'
-          registry: 'us-central1-docker.pkg.dev'
-
-      # Build and push your Docker image
-      - name: 'Build and Push Container'
+      - name: 'Build and Push via Cloud Build'
         run: |
-          IMAGE_URI="us-central1-docker.pkg.dev/sighthound-464019/car-crash-api:${{ github.sha }}"
-          echo "Building image: $IMAGE_URI"
-          docker build -t "$IMAGE_URI" .
-          docker push "$IMAGE_URI"
+          gcloud builds submit \
+            --project=sighthound-464019 \
+            --region=us-central1 \
+            --tag=us-central1-docker.pkg.dev/sighthound-464019/car-crash-api:${{ github.sha }}
 
-      # Deploy to Cloud Run
       - id: 'deploy'
         name: 'Deploy to Cloud Run'
         uses: 'google-github-actions/deploy-cloudrun@v2'
@@ -50,6 +38,5 @@ jobs:
           region: 'us-central1'
           image: 'us-central1-docker.pkg.dev/sighthound-464019/car-crash-api:${{ github.sha }}'
 
-      # Output the Cloud Run service URL
       - name: 'Show Cloud Run URL'
         run: echo "✅ Deployed to ${{ steps.deploy.outputs.url }}"
