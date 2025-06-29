@@ -15,7 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
- 
+
 # Load model
 model = YOLO("best.pt")
 
@@ -23,20 +23,40 @@ model = YOLO("best.pt")
 async def predict_damage(file: UploadFile = File(...)):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
+    width, height = image.size
+    total_image_area = width * height
 
-    # Run inference and draw results on image
+    # Run inference
     results = model(image)
-    annotated_frame = results[0].plot()  # draws bounding boxes
+    boxes = results[0].boxes
     names = model.names
-    classes = results[0].boxes.cls.tolist()
-    damage_types = [names[int(cls_id)] for cls_id in classes]
 
-    # Convert annotated image to base64 string
+    # Draw annotated image
+    annotated_frame = results[0].plot()
+
+    # Prepare outputs
+    damage_info = []
+    for box, cls_id in zip(boxes.xywh, boxes.cls):
+        # box: (x_center, y_center, box_width, box_height)
+        box_width = float(box[2])
+        box_height = float(box[3])
+        box_area = box_width * box_height
+        normalized_area = box_area / total_image_area
+
+        damage_info.append({
+            "damage_type": names[int(cls_id)],
+            "box_width": box_width,
+            "box_height": box_height,
+            "box_area": box_area,
+            "normalized_area": normalized_area
+        })
+
+    # Convert annotated image to base64
     buffered = io.BytesIO()
     Image.fromarray(annotated_frame).save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
 
     return {
-        "damage_type": damage_types,
-        "image": img_str  # base64 encoded PNG
+        "detections": damage_info,
+        "image": img_str
     }
