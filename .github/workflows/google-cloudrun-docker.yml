@@ -10,10 +10,10 @@ permissions:
 
 env:
   PROJECT_ID: sighthound-464019
-  LOCATION: us-central1
-  REPO: car-crash-api
-  SERVICE: car-crash-api-service
-  IMAGE: us-central1-docker.pkg.dev/sighthound-464019/car-crash-api/car-crash-api-service
+  LOCATION: europe-west1                # Cloud Run region
+  REPO: car-crash-api                   # Artifact Registry repository
+  SERVICE: car-damage-api               # Cloud Run service
+  IMAGE: us-central1-docker.pkg.dev/sighthound-464019/car-crash-api/car-damage-api
 
 jobs:
   build_and_deploy:
