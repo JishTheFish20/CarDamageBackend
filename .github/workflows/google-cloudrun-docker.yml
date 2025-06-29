@@ -23,6 +23,9 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
+      - name: 'List files (debug)'
+        run: ls -la
+
       - name: 'Build and Push via Cloud Build'
         run: |
           gcloud builds submit \
