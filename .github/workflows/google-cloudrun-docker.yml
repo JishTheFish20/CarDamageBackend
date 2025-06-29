@@ -31,6 +31,7 @@ jobs:
           gcloud builds submit \
             --project=sighthound-464019 \
             --region=us-central1 \
+            --gcs-source-staging-dir=gs://sighthound-464019-build-artifacts/source \
             --tag=us-central1-docker.pkg.dev/sighthound-464019/car-crash-api:${{ github.sha }}
 
       - id: 'deploy'
